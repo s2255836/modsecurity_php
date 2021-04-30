@@ -1,0 +1,45 @@
+version: "3"
+services:
+  waf:
+    image: owasp/modsecurity:3-nginx
+    container_name: waf
+    restart: always
+  #  ports:
+  #    - "8088:8088"
+    environment:
+      TZ: Asia/Hong_Kong
+    volumes:
+      - ./etc/modsecurity:/etc/modsecurity
+      - ./etc/modsecurity.d:/etc/modsecurity.d
+      - ./etc/nginx/conf.d:/etc/nginx/conf.d
+      - ./etc/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./etc/nginx/fastcgi.conf:/etc/nginx/fastcgi.conf
+      - ./log/modsec_audit.log:/var/log/modsec_audit.log
+      - ./log/nginx:/var/log/nginx
+      - ./wwwlogs:/opt/wwwlogs
+      - ./wwwroot:/opt/wwwroot
+    command: /bin/bash -c "exec nginx -g 'daemon off;'"
+    network_mode: host
+
+  php:
+    image: s2255836/bloc_php:latest
+    environment:
+      TZ: Asia/Hong_Kong
+    container_name: php
+    restart: always
+  #  ports:
+  #    - "9000:9000"
+    volumes:
+      - ./wwwroot:/opt/wwwroot
+      - ./etc/www.conf:/usr/local/etc/php-fpm.d/www.conf
+      - ./etc/php.ini:/usr/local/etc/php/php.ini
+    network_mode: host
+
+  redis:
+    restart: always
+    container_name: redis
+    image: redis:latest
+    network_mode: host
+    volumes:
+    - /opt/paymentapi/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    command: "redis-server /usr/local/etc/redis/redis.conf"
